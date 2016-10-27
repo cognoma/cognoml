@@ -38,6 +38,22 @@ class CognomlClassifier:
         self.json_sanitize = json_sanitize
 
     def test_train_split(self):
+        """
+        Internal wrapper for scikit-learn's test/train split
+        Performs stratified test/train split of Cognoml data sets
+        Stratify option set to consume the mutations data by default
+
+        Returns
+        -------
+        x_train: Pandas data frame
+            Training set of expressions data frame (feature space)
+        x_test: Pandas data frame
+            Test set of expressions data frame
+        y_train: Pandas data frame
+            Training set of mutations data
+        y_test: Pandas data frame
+            Test set of mutations data
+        """
         x = self.X
         y = self.obs_df
         test_size = self.test_size
@@ -47,15 +63,35 @@ class CognomlClassifier:
 
 
     def fit(self):
+        """
+        Internal wrapper for scikit-learn's fit method on a custom data pipeline
+        Fits custom data pipeline using internal training data sets created
+        by test_train_split
+
+        """
         x_train = self.x_train
         y_train = self.y_train
         pipeline = self.pipeline
-        pipeline.fit(X=x_train, y=y_train)
+        try:
+            pipeline.fit(X=x_train, y=y_train)
+        except AttributeError:
+            print("Pipeline {} does not have a fit method".format(pipeline))
 
     def predict(self):
+        """
+        Internal wrapper for scikit-learn's predict method with custom data pipeline
+
+        Returns
+        -------
+        predict_df: Pandas data frame
+            Mutation predictions for entire feature dataframe
+        """
         pipeline = self.pipeline
         x = self.X
-        predict_df = pd.DataFrame({'sample_id': x.index, 'predicted_status': pipeline.predict(x)})
+        try:
+            predict_df = pd.DataFrame({'sample_id': x.index, 'predicted_status': pipeline.predict(x)})
+        except AttributeError:
+            print("Pipeline {} does not have a predict method".format(pipeline))
         if hasattr(pipeline, 'decision_function'):
             predict_df['predicted_score'] = pipeline.decision_function(x)
         if hasattr(pipeline, 'predict_proba'):
