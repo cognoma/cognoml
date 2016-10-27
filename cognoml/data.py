@@ -88,6 +88,10 @@ class CognomlData:
         response = requests.get(url)
         article = response.json()
         download_path = self._download_path
+        directory = self._directory
+
+        if not os.path.exists(directory):
+            os.mkdir(directory)
 
         if not os.path.exists(download_path):
             os.mkdir(download_path)

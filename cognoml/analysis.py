@@ -69,11 +69,11 @@ class CognomlClassifier:
         x_test = self.x_test
         x = self.X
         obs_df = self.obs_df
-        sample_id = obs_df.sample_id
+        obs_df = pd.DataFrame({'sample_id': obs_df.index, 'status': obs_df.values})
         predict_df = self.predict()
-        obs_df['testing'] = obs_df.sample_id.isin(x_test.index).astype(int)
+        obs_df['testing'] = obs_df['sample_id'].isin(x_test.index).astype(int)
         obs_df = obs_df.merge(predict_df, how='right', sort=True)
-        obs_df['selected'] = obs_df.index.isin(sample_id).astype(int)
+        obs_df['selected'] = obs_df['sample_id'].isin(obs_df['sample_id']).astype(int)
         for column in 'status', 'testing', 'selected':
             obs_df[column] = obs_df[column].fillna(-1).astype(int)
         obs_train_df = obs_df.query("testing == 0")
@@ -84,7 +84,7 @@ class CognomlClassifier:
         dimensions['features'] = len(x.columns)
         dimensions['positives'] = sum(obs_df.status == 1)
         dimensions['negatives'] = sum(obs_df.status == 0)
-        dimensions['positive_prevalence'] = y.mean()
+        dimensions['positive_prevalence'] = obs_df.status.mean()
         dimensions['training_observations'] = len(obs_train_df)
         dimensions['testing_observations'] = len(obs_test_df)
         results['dimensions'] = dimensions
