@@ -91,7 +91,7 @@ class CognomlClassifier:
         try:
             predict_df = pd.DataFrame({'sample_id': x.index, 'predicted_status': pipeline.predict(x)})
         except AttributeError:
-            print("Pipeline {} does not have a predict method".format(pipeline))
+            raise AttributeError("Pipeline {} does not have a predict method".format(pipeline))
         if hasattr(pipeline, 'decision_function'):
             predict_df['predicted_score'] = pipeline.decision_function(x)
         if hasattr(pipeline, 'predict_proba'):
@@ -100,7 +100,6 @@ class CognomlClassifier:
 
     def get_results(self):
         pipeline = self.pipeline
-        json_sanitize = self.json_sanitize
         results = collections.OrderedDict()
         x_test = self.x_test
         x = self.X
@@ -141,7 +140,7 @@ class CognomlClassifier:
         feature_df = utils.get_feature_df(pipeline, x.columns)
         results['model']['features'] = feature_df
         results['observations'] = obs_df
-        if json_sanitize:
+        if self.json_sanitize:
             results = utils.make_json_serializable(results)
         return results
 
