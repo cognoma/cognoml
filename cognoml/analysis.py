@@ -55,7 +55,7 @@ class CognomlClassifier:
             Test set of mutations data
         """
         x = self.X
-        y = self.obs_df
+        y = self.y
         test_size = self.test_size
         x_train, x_test, y_train, y_test = train_test_split(
             x, y, test_size=test_size, random_state=0, stratify=y)
@@ -104,7 +104,7 @@ class CognomlClassifier:
         x_test = self.x_test
         x = self.X
         obs_df = self.obs_df
-        obs_df = pd.DataFrame({'sample_id': obs_df.index, 'status': obs_df.values})
+        obs_df = pd.DataFrame(collections.OrderedDict((('sample_id', obs_df.index), ('status', obs_df.values))))
         predict_df = self.predict()
         obs_df['testing'] = obs_df['sample_id'].isin(x_test.index).astype(int)
         obs_df = obs_df.merge(predict_df, how='right', sort=True)

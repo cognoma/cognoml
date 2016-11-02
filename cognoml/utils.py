@@ -1,9 +1,16 @@
 import collections
 import json
-
+import os
 import numpy as np
 import pandas as pd
 import sklearn
+
+
+def create_dir(directory):
+    if not os.path.exists(directory):
+        os.mkdir(directory)
+    else:
+        print('{} already exists, continuing download'.format(directory))
 
 def cv_results_to_df(cv_results):
     """

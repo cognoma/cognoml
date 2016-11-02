@@ -3,14 +3,17 @@ from urllib.request import urlretrieve
 import json
 import requests
 import pandas as pd
+from cognoml.utils import create_dir
 
 
 class CognomlData:
     """Class to manage downloading, cleaning, and filtering data for the Cognoml Machine Learning project."""
 
     def __init__(self, article_id=3487685, figshare_url='https://api.figshare.com/v2/articles/{}/versions',
-                 directory='download', mutation_file='mutation-matrix.tsv.bz2',
-                 expressions_file='expression-matrix.tsv.bz2', version=None):
+                 directory='download', covariates_file='covariates.tsv',
+                 expressions_file='expression-matrix.tsv.bz2',
+                 mutations_json_url = 'https://github.com/cognoma/machine-learning/raw/876b8131bab46878cb49ae7243e459ec0acd2b47/data/api/hippo-input.json',
+                 version=None):
         """
         Attributes:
             article_id (int): figshare article id of data, defaults to 3487685
@@ -28,10 +31,26 @@ class CognomlData:
         self._version_to_url = self.get_article_version()
         self._version = self.get_version(version)
         self._download_path = os.path.join(self._directory, 'v{}'.format(self._version))
-        self._mutation_file = mutation_file
+        self._covariates_file = covariates_file
         self._expressions_file = expressions_file
-        self._mutations_path = os.path.join(self._download_path, self._mutation_file)
+        self._files_to_download = [covariates_file, expressions_file]
+        self._covariates_path = os.path.join(self._download_path, self._covariates_file)
         self._expressions_path = os.path.join(self._download_path, self._expressions_file)
+        self._mutations_json_url = mutations_json_url
+        self._mut_df = self.get_mutations_df()
+
+    def get_mutations_df(self):
+        """
+        Get mutations df from front end rest API call
+
+        Returns
+        -------
+        mut_df: Pandas Series with index 'sample_id' and column 'mutation_status'
+        """
+        url = self._mutations_json_url
+        mut_df = pd.read_json(url).set_index('sample_id')
+        processed_mut_df = mut_df['mutation_status']
+        return processed_mut_df
 
     def get_article_version(self):
         """
@@ -90,26 +109,27 @@ class CognomlData:
         download_path = self._download_path
         directory = self._directory
 
-        if not os.path.exists(directory):
-            os.mkdir(directory)
-
-        if not os.path.exists(download_path):
-            os.mkdir(download_path)
+        # Create dirs
+        create_dir(directory)
+        create_dir(download_path)
 
         path = os.path.join(download_path, 'info.json')
         with open(path, 'w') as write_file:
             json.dump(article, write_file, indent=2, ensure_ascii=False, sort_keys=True)
 
-        # Download the files specified by the metadata
+        # Download the files specified by the class above
         for file_info in article['files']:
             name = file_info['name']
-            path = os.path.join(download_path, name)
-            if os.path.exists(path):
-                print('{} already exists, checking next file'.format(path))
-                continue
-            url = file_info['download_url']
-            print('Downloading {} to `{}`'.format(url, name))
-            urlretrieve(url, path)
+            if name in self._files_to_download:
+                path = os.path.join(download_path, name)
+                if os.path.exists(path):
+                    print('{} already exists, checking next file'.format(path))
+                    continue
+                url = file_info['download_url']
+                print('Downloading {} to `{}`'.format(url, name))
+                urlretrieve(url, path)
+            else:
+                print('Not downloading {}, not needed at the moment'.format(name))
 
         return download_path
 
@@ -127,14 +147,12 @@ class CognomlData:
         -------
         df: Pandas Data frame
         """
-        expr_file = self._expressions_file
-        mut_file = self._mutation_file
-        pickle_dict = {expr_file: 'mutation.p',
-                       mut_file: 'expression.p'}
+        pickle_dict = {file_name: file_name + '_pickle' for file_name in self._files_to_download}
         try:
             pickle_file = pickle_dict[tsv_file]
         except KeyError:
-            raise KeyError('{} not expected input, choose either {} or {}'.format(tsv_file, expr_file, mut_file))
+            raise KeyError('Not expected input, choose either {0} or {1}'.format(self._covariates_file,
+                                                                                 self._expressions_file))
         download_path = self._download_path
         data_path = os.path.join(download_path, tsv_file)
         pickle_path = os.path.join(download_path, pickle_file)
@@ -150,50 +168,34 @@ class CognomlData:
         return df
 
     @staticmethod
-    def filter_data_by_mutation(mutation, expr_df, mut_df):
+    def filter_data_by_mutation(expr_df, mut_df):
         """
         Filters total data sets to include only data for a single mutation
 
         Parameters
         ----------
-        mutation: String
-            Mutation number as string, for example '1'
-
         expr_df: Pandas Data frame
             Data frame containing expressions data indexed by sample_id. Ideally it is output from get_df_from_table
             method on expressions tsv.
 
         mut_df: Pandas Data frame
-            Data frame containing mutations data indexed by sample_id. Ideally it is output from get_df_from_table
-            method on mutations tsv.
+            Data frame containing mutations data indexed by sample_id. This is read in from the front end in the form
+            of a json that is converted to a df.
 
         Returns
         -------
         expr_df_fil: Pandas Data frame
-            expressions data filtered by mutation
-        mut_df_fil: Pandas Data frame
-            mutation data filtered by specific mutation
+            expressions data filtered by mutations selected by front end
 
         """
-
-        print('Filtering to mutation {}'.format(mutation))
-        # filters by individual mutation
-        mut_df_fill = mut_df[mutation]
 
         # filters expressions df by sample_ids (index on both DFs) from mutations df
-        expr_df_fill = expr_df.loc[mut_df_fill.index, :]
+        expr_df_fil = expr_df.loc[mut_df.index, :]
+        return expr_df_fil
 
-        return expr_df_fill, mut_df_fill
-
-    def run(self, mutation):
+    def run(self):
 
         """
-
-        Parameters
-        ----------
-        mutation: String
-            String representation of mutation to be analyzed
-
         Returns
         -------
         expression_df_processed: Pandas Data frame
@@ -204,11 +206,10 @@ class CognomlData:
         """
 
         expr_file = self._expressions_file
-        mut_file = self._mutation_file
         self.download_files()
         expr_df_raw = self.get_df_from_table(expr_file)
-        mut_df_raw = self.get_df_from_table(mut_file)
-        expr_df_processed, mut_df_processed = self.filter_data_by_mutation(mutation, expr_df_raw, mut_df_raw)
-        return expr_df_processed, mut_df_processed
+        mut_df = self._mut_df
+        expr_df_processed = self.filter_data_by_mutation(expr_df_raw, mut_df)
+        return expr_df_processed, mut_df
 
 

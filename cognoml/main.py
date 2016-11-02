@@ -1,16 +1,11 @@
 import json
-
-import requests
-
 from cognoml.analysis import CognomlClassifier
 from cognoml.data import CognomlData
 
 if __name__ == '__main__':
-    data = CognomlData()
-    x, y = data.run('1')
-    y_test = y.head(5000)
-    x_test = pd.DataFrame(x[x.index.isin(list(y_test.index))])
-    classifier = CognomlClassifier(x_test, y_test)
+    a = CognomlData(mutations_json_url='https://github.com/cognoma/machine-learning/raw/876b8131bab46878cb49ae7243e459ec0acd2b47/data/api/hippo-input.json')
+    x, y = a.run()
+    classifier = CognomlClassifier(x, y)
     classifier.fit()
     results = classifier.get_results()
     json_results = json.dumps(results, indent=2)
