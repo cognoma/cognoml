@@ -167,32 +167,6 @@ class CognomlData:
             df.to_pickle(pickle_path)
         return df
 
-    @staticmethod
-    def filter_data_by_mutation(expr_df, mut_df):
-        """
-        Filters total data sets to include only data for a single mutation
-
-        Parameters
-        ----------
-        expr_df: Pandas Data frame
-            Data frame containing expressions data indexed by sample_id. Ideally it is output from get_df_from_table
-            method on expressions tsv.
-
-        mut_df: Pandas Data frame
-            Data frame containing mutations data indexed by sample_id. This is read in from the front end in the form
-            of a json that is converted to a df.
-
-        Returns
-        -------
-        expr_df_fil: Pandas Data frame
-            expressions data filtered by mutations selected by front end
-
-        """
-
-        # filters expressions df by sample_ids (index on both DFs) from mutations df
-        expr_df_fil = expr_df.loc[mut_df.index, :]
-        return expr_df_fil
-
     def run(self):
 
         """
@@ -207,9 +181,8 @@ class CognomlData:
 
         expr_file = self._expressions_file
         self.download_files()
-        expr_df_raw = self.get_df_from_table(expr_file)
+        expr_df = self.get_df_from_table(expr_file)
         mut_df = self._mut_df
-        expr_df_processed = self.filter_data_by_mutation(expr_df_raw, mut_df)
-        return expr_df_processed, mut_df
+        return expr_df, mut_df
 
 

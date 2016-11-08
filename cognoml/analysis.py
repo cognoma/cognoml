@@ -29,8 +29,10 @@ class CognomlClassifier:
             converted to DataTables format.
         """
 
-        self.X = X
+        self.X_whole = X
+        self.X = utils.filter_data_by_mutation(X, y)
         self.obs_df = y
+        self.sample_id = self.obs_df.index
         self.y = y.values
         self.pipeline = pipeline
         self.test_size = test_size
@@ -87,9 +89,10 @@ class CognomlClassifier:
             Mutation predictions for entire feature dataframe
         """
         pipeline = self.pipeline
-        x = self.X
+        x = self.X_whole
         try:
-            predict_df = pd.DataFrame({'sample_id': x.index, 'predicted_status': pipeline.predict(x)})
+            predict_df = pd.DataFrame(collections.OrderedDict((('sample_id', x.index),
+                                                               ('predicted_status', pipeline.predict(x)))))
         except AttributeError:
             raise AttributeError("Pipeline {} does not have a predict method".format(pipeline))
         if hasattr(pipeline, 'decision_function'):
@@ -108,7 +111,7 @@ class CognomlClassifier:
         predict_df = self.predict()
         obs_df['testing'] = obs_df['sample_id'].isin(x_test.index).astype(int)
         obs_df = obs_df.merge(predict_df, how='right', sort=True)
-        obs_df['selected'] = obs_df['sample_id'].isin(obs_df['sample_id']).astype(int)
+        obs_df['selected'] = obs_df['sample_id'].isin(self.sample_id).astype(int)
         for column in 'status', 'testing', 'selected':
             obs_df[column] = obs_df[column].fillna(-1).astype(int)
         obs_train_df = obs_df.query("testing == 0")
