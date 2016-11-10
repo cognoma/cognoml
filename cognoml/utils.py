@@ -1,9 +1,16 @@
 import collections
 import json
-
+import os
 import numpy as np
 import pandas as pd
 import sklearn
+
+
+def create_dir(directory):
+    if not os.path.exists(directory):
+        os.mkdir(directory)
+    else:
+        print('{} already exists, continuing download'.format(directory))
 
 def cv_results_to_df(cv_results):
     """
@@ -125,3 +132,29 @@ def make_json_serializable(obj):
         return obj
     
     raise ValueError(type(obj), 'cannot be JSON sanitized')
+
+
+def filter_data_by_mutation(expr_df, mut_df):
+    """
+    Filters total data sets to include only data for a single mutation
+
+    Parameters
+    ----------
+    expr_df: Pandas Data frame
+        Data frame containing expressions data indexed by sample_id. Ideally it is output from get_df_from_table
+        method on expressions tsv.
+
+    mut_df: Pandas Data frame
+        Data frame containing mutations data indexed by sample_id. This is read in from the front end in the form
+        of a json that is converted to a df.
+
+    Returns
+    -------
+    expr_df_fil: Pandas Data frame
+        expressions data filtered by mutations selected by front end
+
+    """
+
+    # filters expressions df by sample_ids (index on both DFs) from mutations df
+    expr_df_fil = expr_df.loc[mut_df.index, :]
+    return expr_df_fil
