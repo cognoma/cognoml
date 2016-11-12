@@ -122,7 +122,7 @@ class CognomlClassifier:
         dimensions['features'] = len(x.columns)
         dimensions['positives'] = sum(obs_df.status == 1)
         dimensions['negatives'] = sum(obs_df.status == 0)
-        dimensions['positive_prevalence'] = obs_df.status.mean()
+        dimensions['positive_prevalence'] = obs_df.query("selected == 1").status.mean()
         dimensions['training_observations'] = len(obs_train_df)
         dimensions['testing_observations'] = len(obs_test_df)
         results['dimensions'] = dimensions
