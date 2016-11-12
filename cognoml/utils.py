@@ -4,13 +4,15 @@ import os
 import numpy as np
 import pandas as pd
 import sklearn
+import logging
 
+util_logger = logging.getLogger("cognoml.utils")
 
 def create_dir(directory):
     if not os.path.exists(directory):
         os.mkdir(directory)
     else:
-        print('{} already exists, continuing download'.format(directory))
+        util_logger.info('{} already exists, continuing download'.format(directory))
 
 def cv_results_to_df(cv_results):
     """
