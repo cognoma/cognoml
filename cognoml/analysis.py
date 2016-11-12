@@ -5,6 +5,9 @@ from sklearn.model_selection import train_test_split
 
 from cognoml import utils
 from cognoml.classifiers.logistic_regression import grid_search
+import logging
+
+module_logger = logging.getLogger("cognoml.analysis")
 
 class CognomlClassifier:
     """
@@ -38,6 +41,7 @@ class CognomlClassifier:
         self.test_size = test_size
         self.x_train, self.x_test, self.y_train, self.y_test = self.test_train_split()
         self.json_sanitize = json_sanitize
+        self._logger = logging.getLogger("cognoml.analysis.CognomlClassifier")
 
     def test_train_split(self):
         """
@@ -77,7 +81,9 @@ class CognomlClassifier:
         try:
             pipeline.fit(X=x_train, y=y_train)
         except AttributeError:
-            print("Pipeline {} does not have a fit method".format(pipeline))
+            self._logger.error("Pipeline {} does not have a fit method".format(pipeline))
+            raise AttributeError("Pipeline {} does not have a fit method".format(pipeline))
+
 
     def predict(self):
         """
@@ -94,6 +100,7 @@ class CognomlClassifier:
             predict_df = pd.DataFrame(collections.OrderedDict((('sample_id', x.index),
                                                                ('predicted_status', pipeline.predict(x)))))
         except AttributeError:
+            self._logger.error("Pipeline {} does not have a predict method".format(pipeline))
             raise AttributeError("Pipeline {} does not have a predict method".format(pipeline))
         if hasattr(pipeline, 'decision_function'):
             predict_df['predicted_score'] = pipeline.decision_function(x)

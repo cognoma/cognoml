@@ -4,7 +4,9 @@ import json
 import requests
 import pandas as pd
 from cognoml.utils import create_dir
+import logging
 
+module_logger = logging.getLogger("cognoml.data")
 
 class CognomlData:
     """Class to manage downloading, cleaning, and filtering data for the Cognoml Machine Learning project."""
@@ -25,6 +27,7 @@ class CognomlData:
             version (str): name of data version to be used, defaults to None
 
         """
+        self._logger = logging.getLogger("cognoml.data.CognomlData")
         self._article_id = article_id
         self._figshare_url = figshare_url
         self._directory = directory
@@ -39,6 +42,7 @@ class CognomlData:
         self._mutations_json_url = mutations_json_url
         self._mut_df = self.get_mutations_df()
 
+
     def get_mutations_df(self):
         """
         Get mutations df from front end rest API call
@@ -47,6 +51,7 @@ class CognomlData:
         -------
         mut_df: Pandas Series with index 'sample_id' and column 'mutation_status'
         """
+        self._logger.info("Transforming JSON call {0} to data frame".format(self._mutations_json_url))
         url = self._mutations_json_url
         mut_df = pd.read_json(url).set_index('sample_id')
         processed_mut_df = mut_df['mutation_status']
@@ -64,6 +69,7 @@ class CognomlData:
         article_id = self._article_id
         figshare_url = self._figshare_url
         url = figshare_url.format(article_id)
+        self._logger.info("Hitting REST API at {}".format(url))
         response = requests.get(url)
         version_to_url = {d['version']: d['url'] for d in response.json()}
         return version_to_url
@@ -84,8 +90,10 @@ class CognomlData:
         version_to_url = self._version_to_url
         if init_version is None:
             version = max(version_to_url.keys())
+            self._logger.info("No data version specified, defaulting to  {}".format(version))
             return version
         else:
+            self._logger.info("Using data version {}".format(init_version))
             return init_version
 
     def download_files(self):
@@ -101,9 +109,10 @@ class CognomlData:
         """
         version_to_url = self._version_to_url
         version = self._version
-        if version is None:
-            version = max(version_to_url.keys())
+        #if version is None:
+        #    version = max(version_to_url.keys())
         url = version_to_url[version]
+        self._logger.info("Hitting REST API at {} to get correct article".format(url))
         response = requests.get(url)
         article = response.json()
         download_path = self._download_path
@@ -114,6 +123,7 @@ class CognomlData:
         create_dir(download_path)
 
         path = os.path.join(download_path, 'info.json')
+        self._logger.info("Writing json info {}".format(path))
         with open(path, 'w') as write_file:
             json.dump(article, write_file, indent=2, ensure_ascii=False, sort_keys=True)
 
@@ -123,14 +133,13 @@ class CognomlData:
             if name in self._files_to_download:
                 path = os.path.join(download_path, name)
                 if os.path.exists(path):
-                    print('{} already exists, checking next file'.format(path))
+                    self._logger.info('{} already exists, checking next file'.format(path))
                     continue
                 url = file_info['download_url']
-                print('Downloading {} to `{}`'.format(url, name))
+                self._logger.info('Downloading {} to `{}`'.format(url, name))
                 urlretrieve(url, path)
             else:
-                print('Not downloading {}, not needed at the moment'.format(name))
-
+                self._logger.info('Not downloading {}, not needed at the moment'.format(name))
         return download_path
 
     def get_df_from_table(self, tsv_file):
@@ -158,11 +167,11 @@ class CognomlData:
         pickle_path = os.path.join(download_path, pickle_file)
         if os.path.exists(pickle_path):
             df = pd.read_pickle(pickle_path)
-            print('Reading data frame from cached pickle file {}'.format(pickle_path))
+            self._logger.info('Reading data frame from cached pickle file {}'.format(pickle_path))
         else:
             if not os.path.exists(data_path):
                 raise IOError('bz2 file does not exist, try running download_files()')
-            print('Reading data frame from file {}'.format(data_path))
+            self._logger.info('Reading data frame from file {}'.format(data_path))
             df = pd.read_table(data_path, index_col=0)
             df.to_pickle(pickle_path)
         return df
