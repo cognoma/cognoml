@@ -1,8 +1,10 @@
 import os
 from urllib.request import urlretrieve
 import json
-
+import logging
 import requests
+
+module_logger = logging.getLogger("cognoml.figshare")
 
 def get_article_versions(article_id):
     """
@@ -55,7 +57,7 @@ def download_files(directory, article_id=3487685, version=None):
         if os.path.exists(path):
             continue
         url = file_info['download_url']
-        print('Downloading {} to `{}`'.format(url, name))
+        module_logger.info('Downloading {} to `{}`'.format(url, name))
         urlretrieve(url, path)
     
     return version_directory
