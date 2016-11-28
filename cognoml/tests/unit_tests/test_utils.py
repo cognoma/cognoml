@@ -1,5 +1,5 @@
 import os
-import mock
+from unittest import mock
 from cognoml import utils
 
 
