@@ -60,4 +60,8 @@ setuptools.setup(
         'scipy == 0.17.1',
     ],
 
+    # pytest integration
+    setup_requires=['pytest-runner'],
+    tests_require=['pytest'],
+
 )
