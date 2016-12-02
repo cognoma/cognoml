@@ -4,4 +4,4 @@ machine:
 
 dependencies:
   pre:
-    - pip install -r requirements.txt
+    - pip install numpy==1.11.1 scipy==0.17.1 
