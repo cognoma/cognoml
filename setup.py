@@ -58,6 +58,11 @@ setuptools.setup(
         'requests == 2.11.1',
         'scikit-learn == 0.18.0',
         'scipy == 0.17.1',
+        'pytest == 3.0.4',
     ],
+
+    # pytest integration
+    setup_requires=['pytest-runner'],
+    tests_require=['pytest'],
 
 )
