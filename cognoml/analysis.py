@@ -100,8 +100,9 @@ class CognomlClassifier:
             predict_df = pd.DataFrame(collections.OrderedDict((('sample_id', x.index),
                                                                ('predicted_status', pipeline.predict(x)))))
         except AttributeError:
-            self._logger.error("Pipeline {} does not have a predict method".format(pipeline))
-            raise AttributeError("Pipeline {} does not have a predict method".format(pipeline))
+            pipe_err_msg = "Pipeline {} does not have a predict method".format(pipeline)
+            self._logger.error(pipe_err_msg)
+            raise AttributeError(pipe_err_msg)
         if hasattr(pipeline, 'decision_function'):
             predict_df['predicted_score'] = pipeline.decision_function(x)
         if hasattr(pipeline, 'predict_proba'):
