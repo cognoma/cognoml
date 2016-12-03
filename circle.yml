@@ -1,7 +1,13 @@
 machine:
+  post:
+    - sudo apt-get install build-essential
+    - sudo apt-get install libatlas-dev libatlas-base-dev liblapack-dev gfortran libgmp-dev libmpfr-dev libfreetype6-dev libpng-dev
   python:
     version: 3.5.1
 
 dependencies:
   pre:
-    - pip install numpy==1.11.1 scipy==0.17.1 
+    - pip install --upgrade pip
+    - pip install Cython --install-option="--no-cython-compile"
+    - pip install numpy==1.11.1 
+    - pip install scipy==0.17.1
