@@ -11,3 +11,9 @@ dependencies:
     - pip install Cython --install-option="--no-cython-compile"
     - pip install numpy==1.11.1 
     - pip install scipy==0.17.1
+    - pip install pytest==3.0.4
+
+test:
+  override:
+    - py.test -v
+
