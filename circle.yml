@@ -17,4 +17,4 @@ dependencies:
 test:
   override:
     - py.test --verbose
-    - flake8 ./ --max-line-length=79
+    - git diff HEAD '*.py' | flake8 --diff --max-line-length=79
