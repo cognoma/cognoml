@@ -9,11 +9,12 @@ dependencies:
   pre:
     - pip install --upgrade pip
     - pip install Cython --install-option="--no-cython-compile"
-    - pip install numpy==1.11.1 
+    - pip install numpy==1.11.1
     - pip install scipy==0.17.1
     - pip install pytest==3.0.4
+    - pip install flake8==3.3.0
 
 test:
   override:
     - py.test --verbose
-
+    - git diff HEAD '*.py' | flake8 --diff --max-line-length=79

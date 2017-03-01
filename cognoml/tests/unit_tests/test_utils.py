@@ -1,4 +1,3 @@
-import os
 from unittest import mock
 
 from cognoml import utils

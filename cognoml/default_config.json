@@ -1,0 +1,9 @@
+{
+    "article_id": 3487685,
+    "expressions_file": "expression-matrix.tsv.bz2",
+    "figshare_url": "https://api.figshare.com/v2/articles/{}/versions",
+    "version": null,
+    "directory": "download",
+    "mutations_json_url": "https://github.com/cognoma/machine-learning/raw/876b8131bab46878cb49ae7243e459ec0acd2b47/data/api/hippo-input.json",
+    "covariates_file": "covariates.tsv"
+}

@@ -7,14 +7,16 @@ from cognoml import utils
 from cognoml.classifiers.logistic_regression import grid_search
 import logging
 
-module_logger = logging.getLogger("cognoml.analysis")
+module_logger = logging.getLogger('cognoml.analysis')
+
 
 class CognomlClassifier:
     """
     Class to handle all operations related to the Cognoml Classifier
     """
 
-    def __init__(self, X, y, pipeline=grid_search, test_size=0.1, json_sanitize=True):
+    def __init__(self, X, y, pipeline=grid_search, test_size=0.1,
+                 json_sanitize=True):
         """
 
         Parameters
@@ -26,7 +28,8 @@ class CognomlClassifier:
         routine: function
             ML model fitting pipeline, of form function(X, y)
         test_size: float
-            % of total sample to be used in testing data. Training size = 1-test_size
+            % of total sample to be used in testing data. Training size =
+            1 - test_size
         json_sanitize: bool
             Whether to make results JSON-serializable. If `True` DataFrames are
             converted to DataTables format.
@@ -39,9 +42,10 @@ class CognomlClassifier:
         self.y = y.values
         self.pipeline = pipeline
         self.test_size = test_size
-        self.x_train, self.x_test, self.y_train, self.y_test = self.test_train_split()
+        (self.x_train, self.x_test, self.y_train,
+            self.y_test) = self.test_train_split()
         self.json_sanitize = json_sanitize
-        self._logger = logging.getLogger("cognoml.analysis.CognomlClassifier")
+        self._logger = logging.getLogger('cognoml.analysis.CognomlClassifier')
 
     def test_train_split(self):
         """
@@ -67,12 +71,11 @@ class CognomlClassifier:
             x, y, test_size=test_size, random_state=0, stratify=y)
         return x_train, x_test, y_train, y_test
 
-
     def fit(self):
         """
-        Internal wrapper for scikit-learn's fit method on a custom data pipeline
-        Fits custom data pipeline using internal training data sets created
-        by test_train_split
+        Internal wrapper for scikit-learn's fit method on a custom data
+        pipeline. Fits custom data pipeline using internal training data sets
+        created by test_train_split
 
         """
         x_train = self.x_train
@@ -81,13 +84,15 @@ class CognomlClassifier:
         try:
             pipeline.fit(X=x_train, y=y_train)
         except AttributeError:
-            self._logger.error("Pipeline {} does not have a fit method".format(pipeline))
-            raise AttributeError("Pipeline {} does not have a fit method".format(pipeline))
-
+            self._logger.error(('Pipeline {} does not have a fit '
+                                'method').format(pipeline))
+            raise AttributeError(('Pipeline {} does not have a fit '
+                                  'method').format(pipeline))
 
     def predict(self):
         """
-        Internal wrapper for scikit-learn's predict method with custom data pipeline
+        Internal wrapper for scikit-learn's predict method with custom data
+        pipeline.
 
         Returns
         -------
@@ -97,10 +102,13 @@ class CognomlClassifier:
         pipeline = self.pipeline
         x = self.X_whole
         try:
-            predict_df = pd.DataFrame(collections.OrderedDict((('sample_id', x.index),
-                                                               ('predicted_status', pipeline.predict(x)))))
+            predict_df = pd.DataFrame(
+                collections.OrderedDict([('sample_id', x.index),
+                                         ('predicted_status',
+                                          pipeline.predict(x))]))
         except AttributeError:
-            pipe_err_msg = "Pipeline {} does not have a predict method".format(pipeline)
+            pipe_err_msg = ('Pipeline {} does not have a predict '
+                            'method').format(pipeline)
             self._logger.error(pipe_err_msg)
             raise AttributeError(pipe_err_msg)
         if hasattr(pipeline, 'decision_function'):
@@ -115,22 +123,26 @@ class CognomlClassifier:
         x_test = self.x_test
         x = self.X
         obs_df = self.obs_df
-        obs_df = pd.DataFrame(collections.OrderedDict((('sample_id', obs_df.index), ('status', obs_df.values))))
+        obs_df = pd.DataFrame(
+            collections.OrderedDict([('sample_id', obs_df.index),
+                                     ('status', obs_df.values)]))
         predict_df = self.predict()
         obs_df['testing'] = obs_df['sample_id'].isin(x_test.index).astype(int)
         obs_df = obs_df.merge(predict_df, how='right', sort=True)
-        obs_df['selected'] = obs_df['sample_id'].isin(self.sample_id).astype(int)
+        obs_df['selected'] = obs_df['sample_id'].isin(
+            self.sample_id).astype(int)
         for column in 'status', 'testing', 'selected':
             obs_df[column] = obs_df[column].fillna(-1).astype(int)
-        obs_train_df = obs_df.query("testing == 0")
-        obs_test_df = obs_df.query("testing == 1")
+        obs_train_df = obs_df.query('testing == 0')
+        obs_test_df = obs_df.query('testing == 1')
         dimensions = collections.OrderedDict()
         dimensions['observations_selected'] = sum(obs_df.selected == 1)
         dimensions['observations_unselected'] = sum(obs_df.selected == 0)
         dimensions['features'] = len(x.columns)
         dimensions['positives'] = sum(obs_df.status == 1)
         dimensions['negatives'] = sum(obs_df.status == 0)
-        dimensions['positive_prevalence'] = obs_df.query("selected == 1").status.mean()
+        dimensions['positive_prevalence'] = obs_df.query(
+            'selected == 1').status.mean()
         dimensions['training_observations'] = len(obs_train_df)
         dimensions['testing_observations'] = len(obs_test_df)
         results['dimensions'] = dimensions
@@ -147,7 +159,8 @@ class CognomlClassifier:
         gs['cv_scores'] = utils.cv_results_to_df(pipeline.cv_results_)
         results['grid_search'] = gs
         # CHECK BELOW VERY THOROUGHLY
-        results['model'] = utils.model_info(pipeline.best_estimator_.steps[-1][1])
+        results['model'] = utils.model_info(
+            pipeline.best_estimator_.steps[-1][1])
         feature_df = utils.get_feature_df(pipeline, x.columns)
         results['model']['features'] = feature_df
         results['observations'] = obs_df

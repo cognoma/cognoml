@@ -1,4 +1,5 @@
 import collections
+import itertools
 import json
 import os
 import numpy as np
@@ -8,22 +9,26 @@ import logging
 
 util_logger = logging.getLogger("cognoml.utils")
 
+
 def create_dir(directory):
     if not os.path.exists(directory):
         os.mkdir(directory)
     else:
-        util_logger.info('{} already exists, continuing download'.format(directory))
+        util_logger.info(('{} already exists, continuing '
+                          'download').format(directory))
+
 
 def cv_results_to_df(cv_results):
     """
-    Convert a `sklearn.grid_search.GridSearchCV.cv_results_` attribute to a tidy
-    pandas DataFrame where each row is a hyperparameter combinatination.
+    Convert a `sklearn.grid_search.GridSearchCV.cv_results_` attribute to a
+    tidy pandas DataFrame where each row is a hyperparameter combinatination.
     """
     cv_results_df = pd.DataFrame(cv_results)
     columns = [x for x in cv_results_df.columns if x.startswith('param_')]
     columns += ['mean_train_score', 'mean_test_score', 'std_test_score']
     cv_results_df = cv_results_df[columns]
     return cv_results_df
+
 
 def expand_grid(data_dict):
     """
@@ -32,6 +37,7 @@ def expand_grid(data_dict):
     rows = itertools.product(*data_dict.values())
     grid_df = pd.DataFrame.from_records(rows, columns=data_dict.keys())
     return grid_df
+
 
 def df_to_datatables(df, double_precision=5, indent=2):
     """
@@ -44,6 +50,7 @@ def df_to_datatables(df, double_precision=5, indent=2):
     obj.move_to_end('data')
     return obj
 
+
 def class_metrics(y_true, y_pred):
     metrics = collections.OrderedDict()
     metrics['precision'] = sklearn.metrics.precision_score(y_true, y_pred)
@@ -55,11 +62,13 @@ def class_metrics(y_true, y_pred):
         y_true, y_pred, pos_label=None, average='macro')
     return metrics
 
+
 def threshold_metrics(y_true, y_pred):
     metrics = collections.OrderedDict()
     metrics['auroc'] = sklearn.metrics.roc_auc_score(y_true, y_pred)
     metrics['auprc'] = sklearn.metrics.average_precision_score(y_true, y_pred)
     return metrics
+
 
 def model_info(estimator):
     model = collections.OrderedDict()
@@ -68,20 +77,21 @@ def model_info(estimator):
     model['parameters'] = sort_dict(estimator.get_params())
     return model
 
+
 def get_feature_df(grid_search, features):
     """
     Return the feature names and coefficients from the final classifier of the
-    best pipeline found by GridSearchCV. See https://git.io/vPWLI. This function
-    assumes every selection step of the pipeline has a name starting with
-    `select`.
-    
+    best pipeline found by GridSearchCV. See https://git.io/vPWLI. This
+    function assumes every selection step of the pipeline has a name starting
+    with `select`.
+
     Params
     ------
     grid_search: GridSearchCV object
         A post-fit GridSearchCV object where the estimator is a Pipeline.
     features: list
         initial feature names
-    
+
     Returns
     -------
     pandas.DataFrame
@@ -102,12 +112,14 @@ def get_feature_df(grid_search, features):
     ])
     return feature_df
 
+
 def sort_dict(dictionary):
     """
     Return a dictionary as an OrderedDict sorted by keys.
     """
     items = sorted(dictionary.items())
     return collections.OrderedDict(items)
+
 
 def make_json_serializable(obj):
     """
@@ -116,23 +128,24 @@ def make_json_serializable(obj):
     """
     if isinstance(obj, dict):
         return collections.OrderedDict(
-            (make_json_serializable(k), make_json_serializable(v)) for k, v in obj.items())
-    
+            (make_json_serializable(k), make_json_serializable(v))
+            for k, v in obj.items())
+
     if isinstance(obj, (list, tuple)):
         return [make_json_serializable(x) for x in obj]
-    
+
     if isinstance(obj, pd.DataFrame):
         return df_to_datatables(obj)
-    
+
     if type(obj).__module__ == 'numpy':
         obj = obj.item()
-    
+
     if isinstance(obj, float):
         return float(format(obj, '.5g'))
-    
+
     if isinstance(obj, (int, str)):
         return obj
-    
+
     raise ValueError(type(obj), 'cannot be JSON sanitized')
 
 
@@ -143,12 +156,12 @@ def filter_data_by_mutation(expr_df, mut_df):
     Parameters
     ----------
     expr_df: Pandas Data frame
-        Data frame containing expressions data indexed by sample_id. Ideally it is output from get_df_from_table
-        method on expressions tsv.
+        Data frame containing expressions data indexed by sample_id. Ideally it
+        is output from get_df_from_table method on expressions tsv.
 
     mut_df: Pandas Data frame
-        Data frame containing mutations data indexed by sample_id. This is read in from the front end in the form
-        of a json that is converted to a df.
+        Data frame containing mutations data indexed by sample_id. This is read
+        in from the front end in the form of a json that is converted to a df.
 
     Returns
     -------
@@ -157,6 +170,7 @@ def filter_data_by_mutation(expr_df, mut_df):
 
     """
 
-    # filters expressions df by sample_ids (index on both DFs) from mutations df
+    # filters expressions df by sample_ids (index on both DFs) from
+    # mutations df
     expr_df_fil = expr_df.loc[mut_df.index, :]
     return expr_df_fil
