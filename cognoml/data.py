@@ -100,8 +100,8 @@ class CognomlData:
         version_to_url = self._version_to_url
         if init_version is None:
             version = max(version_to_url.keys())
-            self._logger.info('No data version specified, ' +
-                              'defaulting to {}'.format(version))
+            self._logger.info(('No data version specified, '
+                               'defaulting to {}').format(version))
             return version
         else:
             self._logger.info('Using data version {}'.format(init_version))
@@ -124,8 +124,8 @@ class CognomlData:
         if version is None:
             version = max(version_to_url.keys())
         url = version_to_url[version]
-        self._logger.info('Hitting REST API at ' +
-                          '{} to get correct article'.format(url))
+        self._logger.info(('Hitting REST API at '
+                           '{} to get correct article').format(url))
         response = requests.get(url)
         article = response.json()
         download_path = self._download_path
@@ -147,14 +147,14 @@ class CognomlData:
             if name in self._files_to_download:
                 path = os.path.join(download_path, name)
                 if os.path.exists(path):
-                    self._logger.info(('{} already exists, ' +
+                    self._logger.info(('{} already exists, '
                                        'checking next file').format(path))
                     continue
                 url = file_info['download_url']
                 self._logger.info('Downloading {} to `{}`'.format(url, name))
                 urlretrieve(url, path)
             else:
-                self._logger.info(('Not downloading {}, not needed, ' +
+                self._logger.info(('Not downloading {}, not needed, '
                                    'at the moment').format(name))
         return download_path
 
@@ -178,19 +178,19 @@ class CognomlData:
         try:
             pickle_file = pickle_dict[tsv_file]
         except KeyError:
-            raise KeyError('Not expected input, choose either ' +
-                           '{0} or {1}'.format(self._covariates_file,
-                                               self._expressions_file))
+            raise KeyError(('Not expected input, choose either '
+                            '{0} or {1}').format(self._covariates_file,
+                                                 self._expressions_file))
         download_path = self._download_path
         data_path = os.path.join(download_path, tsv_file)
         pickle_path = os.path.join(download_path, pickle_file)
         if os.path.exists(pickle_path):
             df = pd.read_pickle(pickle_path)
-            self._logger.info('Reading data frame from cached pickle ' +
-                              'file {}'.format(pickle_path))
+            self._logger.info(('Reading data frame from cached pickle '
+                               'file {}').format(pickle_path))
         else:
             if not os.path.exists(data_path):
-                raise IOError('bz2 file does not exist, try running ' +
+                raise IOError('bz2 file does not exist, try running '
                               'download_files()')
             self._logger.info('Reading data frame from file {}'.format(
                 data_path))

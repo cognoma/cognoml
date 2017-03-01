@@ -15,8 +15,8 @@ class CognomlClassifier:
     Class to handle all operations related to the Cognoml Classifier
     """
 
-    def __init__(self, X, y,
-                 pipeline=grid_search, test_size=0.1, json_sanitize=True):
+    def __init__(self, X, y, pipeline=grid_search, test_size=0.1,
+                 json_sanitize=True):
         """
 
         Parameters
@@ -42,8 +42,8 @@ class CognomlClassifier:
         self.y = y.values
         self.pipeline = pipeline
         self.test_size = test_size
-        self.x_train, self.x_test, self.y_train, self.y_test = \
-            self.test_train_split()
+        (self.x_train, self.x_test, self.y_train,
+            self.y_test) = self.test_train_split()
         self.json_sanitize = json_sanitize
         self._logger = logging.getLogger('cognoml.analysis.CognomlClassifier')
 
@@ -84,9 +84,9 @@ class CognomlClassifier:
         try:
             pipeline.fit(X=x_train, y=y_train)
         except AttributeError:
-            self._logger.error(('Pipeline {} does not have a fit ' +
+            self._logger.error(('Pipeline {} does not have a fit '
                                 'method').format(pipeline))
-            raise AttributeError(('Pipeline {} does not have a fit ' +
+            raise AttributeError(('Pipeline {} does not have a fit '
                                   'method').format(pipeline))
 
     def predict(self):
@@ -107,7 +107,7 @@ class CognomlClassifier:
                                          ('predicted_status',
                                           pipeline.predict(x))]))
         except AttributeError:
-            pipe_err_msg = ('Pipeline {} does not have a predict ' +
+            pipe_err_msg = ('Pipeline {} does not have a predict '
                             'method').format(pipeline)
             self._logger.error(pipe_err_msg)
             raise AttributeError(pipe_err_msg)
@@ -129,8 +129,8 @@ class CognomlClassifier:
         predict_df = self.predict()
         obs_df['testing'] = obs_df['sample_id'].isin(x_test.index).astype(int)
         obs_df = obs_df.merge(predict_df, how='right', sort=True)
-        obs_df['selected'] = \
-            obs_df['sample_id'].isin(self.sample_id).astype(int)
+        obs_df['selected'] = obs_df['sample_id'].isin(
+            self.sample_id).astype(int)
         for column in 'status', 'testing', 'selected':
             obs_df[column] = obs_df[column].fillna(-1).astype(int)
         obs_train_df = obs_df.query('testing == 0')
@@ -141,8 +141,8 @@ class CognomlClassifier:
         dimensions['features'] = len(x.columns)
         dimensions['positives'] = sum(obs_df.status == 1)
         dimensions['negatives'] = sum(obs_df.status == 0)
-        dimensions['positive_prevalence'] = \
-            obs_df.query('selected == 1').status.mean()
+        dimensions['positive_prevalence'] = obs_df.query(
+            'selected == 1').status.mean()
         dimensions['training_observations'] = len(obs_train_df)
         dimensions['testing_observations'] = len(obs_test_df)
         results['dimensions'] = dimensions
@@ -159,8 +159,8 @@ class CognomlClassifier:
         gs['cv_scores'] = utils.cv_results_to_df(pipeline.cv_results_)
         results['grid_search'] = gs
         # CHECK BELOW VERY THOROUGHLY
-        results['model'] = \
-            utils.model_info(pipeline.best_estimator_.steps[-1][1])
+        results['model'] = utils.model_info(
+            pipeline.best_estimator_.steps[-1][1])
         feature_df = utils.get_feature_df(pipeline, x.columns)
         results['model']['features'] = feature_df
         results['observations'] = obs_df

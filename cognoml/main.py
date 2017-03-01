@@ -16,7 +16,7 @@ def main():
     # create the logging file handler
     fh = logging.FileHandler('cognoml.log')
 
-    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s ' +
+    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s '
                                   '- %(message)s')
     fh.setFormatter(formatter)
 
