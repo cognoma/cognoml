@@ -121,8 +121,8 @@ class CognomlData:
         """
         version_to_url = self._version_to_url
         version = self._version
-        if version is None:
-            version = max(version_to_url.keys())
+        #if version is None:
+        #    version = max(version_to_url.keys())
         url = version_to_url[version]
         self._logger.info(('Hitting REST API at '
                            '{} to get correct article').format(url))
