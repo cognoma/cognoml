@@ -1,7 +1,6 @@
-**Cognoml is inactive since deciding to return Jupyter Notebooks in April 2017
-See Cognoma issue [#63](https://github.com/cognoma/cognoma/issues/63) for details**
-
 # Python machine learning package for Project Cognoma
+**Cognoml is inactive since deciding to return Jupyter Notebooks in April 2017**
+**See Cognoma issue [#63](https://github.com/cognoma/cognoma/issues/63) for details**
 
 [![CircleCI](https://circleci.com/gh/cognoma/cognoml.svg?style=svg)](https://circleci.com/gh/cognoma/cognoml)
 
